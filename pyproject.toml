@@ -1,0 +1,93 @@
+[project]
+name = "bikematch"
+version = "0.1.0"
+description = "Private visual matching service for stolen bicycles in Greater Edinburgh"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = { text = "MIT" }
+
+# Version pins below are the handover-mandated set (section 2). Where a newer
+# release exists at build time it is noted in README.md rather than silently
+# adopted: the lockfile is authoritative and bumps are a deliberate act.
+dependencies = [
+    # --- runtime core ---
+    "SQLAlchemy==2.0.51",
+    "alembic==1.19.0",
+    "APScheduler==3.11.3",
+    "typer==0.27.1",
+    "pydantic==2.13.4",
+    "structlog==26.1.0",
+    "tomli-w==1.2.0",
+    # --- email ---
+    "IMAPClient==3.1.0",
+    "jinja2==3.1.6",
+    # --- imaging ---
+    "pillow==12.3.0",
+    "pillow-heif==1.5.0",
+    "ImageHash==4.3.2",
+    "numpy==2.5.1",
+    # --- collectors ---
+    "httpx==0.28.1",
+    "selectolax==0.4.11",
+    "playwright==1.61.0",
+    # --- ml / retrieval ---
+    "torch==2.13.0",
+    "torchvision==0.28.0",
+    "transformers==5.14.1",
+    "faiss-cpu==1.14.3",
+]
+
+[project.optional-dependencies]
+# Production email transport. Only needed when SES is the configured sender.
+ses = ["boto3==1.43.66"]
+
+[project.scripts]
+bikematch = "bikematch.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.16.1",
+    "mypy==2.3.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bikematch"]
+
+[tool.uv]
+# Keep the managed interpreter and cache on the persistent network volume.
+# See scripts/restore_env.sh — a rebuild must be able to reproduce this exactly.
+package = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+# .claude/hooks: RTFM-generated tooling scaffolding, not project code.
+extend-exclude = [".claude"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "PTH", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["bikematch"]
+mypy_path = "src"
+strict_optional = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "live: touches a real external service; excluded from default runs",
+    "slow: long-running (model download, large corpus)",
+]
+addopts = "-m 'not live' --strict-markers"

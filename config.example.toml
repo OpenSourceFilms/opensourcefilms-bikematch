@@ -1,0 +1,39 @@
+# Copy to config.toml and edit. Credentials NEVER go in this file --
+# they come from the environment (see README / section 37 of the handover).
+
+[paths]
+persistent_root = "/workspace/bikematch"   # RunPod Network Volume: canonical
+working_root = "/var/lib/bikematch"        # container-local: disposable cache
+
+[email]
+poll_seconds = 60
+stolen_addresses = ["stolen@example.org"]
+check_addresses = ["check@example.org"]
+sender_address = "bikematch@example.org"
+
+[search_area]
+name = "Greater Edinburgh"
+centre_lat = 55.9533
+centre_lon = -3.1883
+radius_miles = 25
+
+[collectors.ebay]
+enabled = true
+
+[collectors.gumtree]
+enabled = true
+
+[collectors.facebook]
+enabled = true
+
+[matching]
+retrieval_candidates_per_query = 100
+rerank_listings = 30
+immediate_email_max = 5
+digest_email_max = 20
+
+[features]
+# All three stay off until measured to help. See handover sections 18-21.
+segmentation_enabled = false
+ocr_enabled = false
+vlm_enabled = false

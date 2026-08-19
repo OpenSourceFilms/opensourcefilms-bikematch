@@ -1,0 +1,86 @@
+from __future__ import annotations
+
+import re
+import time
+import uuid
+
+from bikematch.ids import (
+    is_case_alias,
+    is_check_alias,
+    new_case_alias,
+    new_check_alias,
+    new_id,
+    uuid7,
+)
+
+
+def test_uuid7_has_correct_version_and_variant():
+    for _ in range(200):
+        u = uuid7()
+        assert u.version == 7
+        assert (u.int >> 62) & 0b11 == 0b10, "RFC 9562 variant bits"
+
+
+def test_uuid7_timestamps_are_non_decreasing():
+    ids = [uuid7() for _ in range(500)]
+    timestamps = [u.int >> 80 for u in ids]
+    assert timestamps == sorted(timestamps)
+
+
+def test_uuid7_sorts_lexicographically_across_milliseconds():
+    """UUIDv7 orders by time only between distinct milliseconds.
+
+    Within a single millisecond the random bits decide, so ordering is
+    guaranteed across a time gap, not within a tight generation loop. This is
+    the property the database actually relies on.
+    """
+    batches = []
+    for _ in range(5):
+        batches.append(uuid7())
+        time.sleep(0.002)
+    assert [str(u) for u in batches] == sorted(str(u) for u in batches)
+
+
+def test_uuid7_is_unique_and_parses_back():
+    ids = {new_id() for _ in range(2000)}
+    assert len(ids) == 2000
+    for value in list(ids)[:20]:
+        assert uuid.UUID(value).version == 7
+
+
+def test_case_alias_shape_and_roundtrip():
+    alias = new_case_alias(2026)
+    assert re.fullmatch(r"EDB-2026-[0-9A-HJ-KM-NP-TV-Z]{6}", alias), alias
+    assert is_case_alias(alias)
+    assert not is_check_alias(alias)
+
+
+def test_check_alias_is_distinct_namespace():
+    alias = new_check_alias(2026)
+    assert alias.startswith("CHK-2026-")
+    assert is_check_alias(alias)
+    assert not is_case_alias(alias)
+
+
+def test_alias_alphabet_excludes_ambiguous_characters():
+    bodies = "".join(new_case_alias().split("-")[2] for _ in range(500))
+    assert not (set(bodies) & set("ILOU")), "ambiguous characters must not appear"
+
+
+def test_alias_validation_is_lenient_about_whitespace_and_case():
+    assert is_case_alias("  edb-2026-8f3k2q  ")
+
+
+def test_alias_validation_rejects_malformed():
+    for bad in [
+        "",
+        "EDB-2026",
+        "EDB-2026-8F3K2",  # too short
+        "EDB-2026-8F3K2QQ",  # too long
+        "EDB-26-8F3K2Q",  # short year
+        "EDB-YEAR-8F3K2Q",
+        "CHK-2026-8F3K2Q",  # wrong namespace
+        "EDB-2026-8F3K2I",  # excluded character
+        "EDB-2026-8F3-K2Q",  # extra separator
+    ]:
+        assert not is_case_alias(bad), bad

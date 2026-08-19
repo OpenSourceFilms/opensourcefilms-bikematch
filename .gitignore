@@ -1,0 +1,31 @@
+# This repository root is also the canonical persistent data root
+# (paths.persistent_root). Code is version-controlled; archive data is not.
+archive/
+snapshots/
+models/
+browser_profiles/
+exports/
+backups/
+benchmark/*
+!benchmark/.gitkeep
+!benchmark/selected_pipeline.json
+
+# Environment
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Secrets never belong in the repo (see README: config carries no credentials)
+.env
+*.secret.toml
+config.toml
+
+# RTFM local database
+.rtfm/
+
+# Claude Code session-local state (not project code)
+.claude/scheduled_tasks.lock
