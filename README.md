@@ -6,6 +6,10 @@ Edinburgh discover marketplace advertisements which may show their bicycle.
 There is no public website, no public searchable database and no enforcement
 component. The system ends at private matching, archiving and notification.
 
+Built by [Open Source Films](https://github.com/OpenSourceFilms), with GPU
+development and testing on [RunPod](https://runpod.io) — see Storage model
+below for how its Network Volumes shape the architecture.
+
 ## Workflows
 
 **Stolen bike** — owner emails photographs → system archives the email and
@@ -83,7 +87,7 @@ retrieval benchmark is the first step that genuinely wants a GPU pod.
 ## Development
 
 ```bash
-uv run bikematch doctor      # environment and dependency diagnostics
+uv run bikematch doctor      # environment/dependency diagnostics -- the only CLI command implemented so far
 uv run pytest                # excludes tests marked `live`
 uv run ruff check .
 uv run mypy
@@ -99,7 +103,9 @@ is no running matcher, no collector, and no deployed instance behind this repo
 today. It is published early so the design and progress are visible, not as a
 claim that the service is operational.
 
-## Infrastructure
+## Further reading
 
-GPU development and testing for this project is supported by [RunPod](https://runpod.io).
+- [`docs/HANDOVER.md`](docs/HANDOVER.md) — the full architecture spec (42 sections).
+- [`docs/DATA_HANDLING.md`](docs/DATA_HANDLING.md) — what this project collects and the boundary around it.
+- [`docs/SECURITY.md`](docs/SECURITY.md) — how to report a vulnerability.
 
