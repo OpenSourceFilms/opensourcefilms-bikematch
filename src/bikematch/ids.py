@@ -81,7 +81,10 @@ def _new_alias(prefix: str, year: int | None) -> str:
 def _is_alias(value: str, prefix: str) -> bool:
     # Email subject parsing receives untrusted strings. Keep malformed or
     # non-string input out of the case lookup path without raising.
-    if not isinstance(value, str):
+    if not isinstance(value, str) or not value.isascii():
+        # Unicode uppercasing is not a safe alias canonicalisation:
+        # long-s becomes S, and ligatures can expand into multiple ASCII
+        # characters. Reject them before the case-insensitive lookup path.
         return False
     parts = value.strip().upper().split("-")
     if len(parts) != 3:
