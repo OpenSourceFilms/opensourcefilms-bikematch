@@ -4,6 +4,8 @@ import re
 import time
 import uuid
 
+import pytest
+
 from bikematch.ids import (
     is_case_alias,
     is_check_alias,
@@ -84,3 +86,36 @@ def test_alias_validation_rejects_malformed():
         "EDB-2026-8F3-K2Q",  # extra separator
     ]:
         assert not is_case_alias(bad), bad
+
+
+
+def test_generated_aliases_have_canonical_four_digit_years():
+    for generate, validate in (
+        (new_case_alias, is_case_alias),
+        (new_check_alias, is_check_alias),
+    ):
+        assert validate(generate())
+        assert validate(generate(2026))
+        for invalid_year in (-1, 0, 999, 10000, True, "2026", 2026.0):
+            with pytest.raises(ValueError, match="four-digit calendar year"):
+                generate(invalid_year)
+
+
+def test_alias_validation_rejects_non_ascii_digits_and_impossible_years():
+    for validate, prefix in (
+        (is_case_alias, "EDB"),
+        (is_check_alias, "CHK"),
+    ):
+        for noncanonical in (
+            f"{prefix}-٢٠٢٦-8F3K2Q",  # Arabic-Indic numeral sequence
+            f"{prefix}-２０２６-8F3K2Q",  # full-width Unicode numerals
+            f"{prefix}-0000-8F3K2Q",  # cannot be generated
+            f"{prefix}-0999-8F3K2Q",
+        ):
+            assert not validate(noncanonical), noncanonical
+
+
+def test_untrusted_non_string_case_identifiers_fail_closed():
+    for check in (is_case_alias, is_check_alias):
+        for malformed in (None, 2026, True, b"EDB-2026-8F3K2Q", [], {}):
+            assert not check(malformed)
