@@ -115,6 +115,40 @@ def test_alias_validation_rejects_non_ascii_digits_and_impossible_years():
             assert not validate(noncanonical), noncanonical
 
 
+@pytest.mark.parametrize(
+    ("unicode_body", "folds_to"),
+    [
+        ("8F3\u017f2Q", "8F3S2Q"),  # long s -> ASCII S under .upper()
+        ("8F3\ufb05Q", "8F3STQ"),  # two-letter ST ligature expansion
+    ],
+)
+def test_unicode_case_expansions_cannot_match_ascii_aliases(unicode_body, folds_to):
+    # The *old* parser uppercased first, turning these untrusted strings
+    # into accepted six-character ASCII aliases. That risks attaching an
+    # emailed response to a different, legitimate case or check.
+    assert unicode_body.upper() == folds_to
+    for prefix, validate in (("EDB", is_case_alias), ("CHK", is_check_alias)):
+        assert validate(f"{prefix}-2026-{folds_to}")
+        assert not validate(f"{prefix}-2026-{unicode_body}")
+
+
+@pytest.mark.parametrize(
+    "alias",
+    [
+        "EDB-2026-8F3\u017f2Q",
+        "EDB-2026-8F3\ufb05Q",
+        "EDB-2026-8F3K2Q\u00a0",  # non-ASCII space must not bypass validation
+        "\u00a0EDB-2026-8F3K2Q",
+        "EDB-2026-\uff18F3K2Q",  # full-width digit
+        "CHK-2026-8F3\u017f2Q",
+        "CHK-2026-8F3\ufb05Q",
+    ],
+)
+def test_non_ascii_alias_text_rejected_before_normalization(alias):
+    assert not is_case_alias(alias)
+    assert not is_check_alias(alias)
+
+
 def test_untrusted_non_string_case_identifiers_fail_closed():
     for check in (is_case_alias, is_check_alias):
         for malformed in (None, 2026, True, b"EDB-2026-8F3K2Q", [], {}):
