@@ -88,12 +88,13 @@ retrieval benchmark is the first step that genuinely wants a GPU pod.
 
 The implemented `ids.py` utility generates internal UUIDv7 identifiers and
 human-facing `EDB-YYYY-XXXXXX` and `CHK-YYYY-XXXXXX` aliases. The alias
-validators accept surrounding whitespace and lowercase letters, but reject
-non-ASCII year numerals, impossible four-digit years, malformed identifiers and
-non-string input. The generators reject invalid year arguments. This matters
-because future email-subject matching must not attach a submission to the
-wrong case by interpreting visually similar Unicode numeral sequences as
-ordinary ASCII identifiers. **Alias parsing alone is not authorization**:
+validators accept surrounding ASCII whitespace and lowercase ASCII
+letters, but reject **all non-ASCII code points before case conversion**,
+impossible four-digit years, malformed identifiers and non-string input.
+The generators reject invalid year arguments. This prevents Unicode
+uppercase mappings, including long-s becoming S and expanding ligatures,
+from silently matching another case's ASCII identifier during future
+email-subject matching. **Alias parsing alone is not authorization**:
 the future database/email workflow must still confirm ownership, uniqueness
 and permissions before linking evidence to a case.
 
