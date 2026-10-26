@@ -72,11 +72,17 @@ def new_id() -> str:
 def _new_alias(prefix: str, year: int | None) -> str:
     if year is None:
         year = _dt.datetime.now(_dt.UTC).year
+    if type(year) is not int or not 1000 <= year <= 9999:
+        raise ValueError("case alias year must be a four-digit calendar year")
     body = "".join(secrets.choice(_ALPHABET) for _ in range(_ALIAS_BODY_LEN))
     return f"{prefix}-{year}-{body}"
 
 
 def _is_alias(value: str, prefix: str) -> bool:
+    # Email subject parsing receives untrusted strings. Keep malformed or
+    # non-string input out of the case lookup path without raising.
+    if not isinstance(value, str):
+        return False
     parts = value.strip().upper().split("-")
     if len(parts) != 3:
         return False
@@ -84,7 +90,9 @@ def _is_alias(value: str, prefix: str) -> bool:
     return (
         got_prefix == prefix
         and len(year) == 4
-        and year.isdigit()
+        and year.isascii()
+        and year.isdecimal()
+        and int(year) >= 1000
         and len(body) == _ALIAS_BODY_LEN
         and all(c in _ALPHABET for c in body)
     )
