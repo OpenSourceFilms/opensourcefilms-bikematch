@@ -108,7 +108,7 @@ def test_alias_validation_rejects_non_ascii_digits_and_impossible_years():
     ):
         for noncanonical in (
             f"{prefix}-٢٠٢٦-8F3K2Q",  # Arabic-Indic numeral sequence
-            f"{prefix}-２０２６-8F3K2Q",  # full-width Unicode numerals
+            f"{prefix}-\uFF12\uFF10\uFF12\uFF16-8F3K2Q",  # full-width Unicode numerals
             f"{prefix}-0000-8F3K2Q",  # cannot be generated
             f"{prefix}-0999-8F3K2Q",
         ):
